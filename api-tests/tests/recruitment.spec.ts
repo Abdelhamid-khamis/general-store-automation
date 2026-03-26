@@ -7,7 +7,7 @@
  *   TC_API_003  DELETE /api/v2/recruitment/candidates  — remove it and confirm deletion
  *
  * A shared APIRequestContext is created once in beforeAll so the login session
- * (cookies + XSRF-TOKEN) persists across all three tests.
+ * cookie persists across all three tests.
  */
 
 import {
