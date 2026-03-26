@@ -7,9 +7,13 @@
     "test": "npx wdio run wdio.conf.ts",
     "test:report": "npx wdio run wdio.conf.ts && npm run report",
     "report": "node scripts/mergeReports.js && npx marge reports/json/merged.json --reportDir reports/html --reportFilename index",
-    "lint": "eslint src --ext .ts",
+    "test:api": "npx playwright test --config api-tests/playwright.config.ts",
+    "test:api:report": "npx playwright show-report reports/playwright",
+    "lint": "eslint src wdio.conf.ts --ext .ts",
+    "lint:api": "eslint api-tests --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "type-check:api": "tsc --noEmit --project api-tests/tsconfig.json"
   },
   "keywords": [
     "appium",
@@ -22,6 +26,7 @@
   "author": "SDET",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.44.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.18.0",

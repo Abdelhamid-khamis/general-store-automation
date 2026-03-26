@@ -1,4 +1,4 @@
-name: PR Checks — Lint & Type
+name: PR Checks - Lint and Type
 
 on:
   pull_request:

@@ -1,9 +1,3 @@
-/**
- * Appium 2.x Capabilities Configuration
- * Target: Android Emulator (AVD) — API 34 (Android 14)
- * App: General Store (com.androidsample.generalstore)
- */
-
 export interface AppiumCapabilities {
   platformName: string;
   'appium:automationName': string;
@@ -29,9 +23,7 @@ const capabilities: AppiumCapabilities = {
   'appium:automationName': 'UiAutomator2',
   'appium:deviceName': process.env.DEVICE_NAME || 'emulator-5554',
   'appium:platformVersion': process.env.PLATFORM_VERSION || '14.0',
-  'appium:app': process.env.APP_PATH
-    ? process.env.APP_PATH
-    : `${process.cwd()}/apps/General-Store.apk`,
+  'appium:app': process.env.APP_PATH ?? `${process.cwd()}/apps/General-Store.apk`,
   'appium:appPackage': 'com.androidsample.generalstore',
   'appium:appActivity': 'com.androidsample.generalstore.SplashActivity',
   'appium:noReset': false,

@@ -28,7 +28,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "api-tests"
   ],
   "ts-node": {
     "transpileOnly": true,

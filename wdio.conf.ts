@@ -1,7 +1,8 @@
 import type { Options } from '@wdio/types';
 import capabilities from './src/config/capabilities';
 import * as path from 'path';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+import * as fs from 'fs';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const WdioMochawesomeReporter = require('wdio-mochawesome-reporter').default;
 
 export const config: Options.Testrunner = {
@@ -14,20 +15,16 @@ export const config: Options.Testrunner = {
     },
   },
 
-  // ─── Appium Server ───────────────────────────────────────────────────────────
   port: 4723,
   path: '/wd/hub',
   hostname: 'localhost',
 
-  // ─── Test Specs ──────────────────────────────────────────────────────────────
   specs: ['./src/tests/**/*.spec.ts'],
   exclude: [],
 
-  // ─── Capabilities ────────────────────────────────────────────────────────────
   maxInstances: 1,
   capabilities: [capabilities],
 
-  // ─── Framework ───────────────────────────────────────────────────────────────
   framework: 'mocha',
   mochaOpts: {
     ui: 'bdd',
@@ -35,7 +32,6 @@ export const config: Options.Testrunner = {
     retries: 1,
   },
 
-  // ─── Reporters ───────────────────────────────────────────────────────────────
   reporters: [
     'spec',
     [WdioMochawesomeReporter, {
@@ -46,16 +42,13 @@ export const config: Options.Testrunner = {
     }],
   ],
 
-  // ─── Logging ─────────────────────────────────────────────────────────────────
   logLevel: 'info',
   bail: 0,
   waitforTimeout: 30000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
 
-  // ─── Hooks ───────────────────────────────────────────────────────────────────
   onPrepare(): void {
-    const fs = require('fs');
     ['./reports/json', './reports/html'].forEach((dir) => {
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     });

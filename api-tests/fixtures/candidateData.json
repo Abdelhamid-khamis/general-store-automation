@@ -1,0 +1,8 @@
+{
+  "firstName": "Jane",
+  "middleName": "API",
+  "lastName": "Doe",
+  "contactNumber": "0501234567",
+  "comment": "Created by Playwright API automation",
+  "consentToKeepData": false
+}

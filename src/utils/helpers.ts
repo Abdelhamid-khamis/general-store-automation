@@ -1,17 +1,7 @@
 import * as fs from 'fs';
 
-/**
- * Shared helpers used across all Page Objects.
- * Centralises element waits, gestures, and screenshot capture
- * to keep Page Objects lean and DRY.
- */
-
 const DEFAULT_TIMEOUT = 30000;
-const SHORT_TIMEOUT = 10000;
 
-/**
- * Waits for an element to be displayed and returns it.
- */
 export async function waitForElement(
   selector: string,
   timeout: number = DEFAULT_TIMEOUT
@@ -21,9 +11,6 @@ export async function waitForElement(
   return el;
 }
 
-/**
- * Waits for an element to exist in DOM (not necessarily visible).
- */
 export async function waitForExist(
   selector: string,
   timeout: number = DEFAULT_TIMEOUT
@@ -33,34 +20,24 @@ export async function waitForExist(
   return el;
 }
 
-/**
- * Clicks an element after waiting for it to be clickable.
- */
 export async function tapElement(selector: string): Promise<void> {
   const el = await $(selector);
   await el.waitForEnabled({ timeout: DEFAULT_TIMEOUT });
   await el.click();
 }
 
-/**
- * Clears a field and types text.
- */
 export async function clearAndType(selector: string, text: string): Promise<void> {
   const el = await waitForElement(selector);
   await el.clearValue();
   await el.setValue(text);
-  // Dismiss keyboard on Android 14
   try {
     await driver.hideKeyboard();
-    await driver.pause(1000); // Wait for keyboard to fully dismiss and layout to reflow
+    await driver.pause(1000);
   } catch {
-    // Keyboard may already be hidden — safe to ignore
+    // keyboard may already be hidden
   }
 }
 
-/**
- * Checks if an element is currently displayed (non-throwing).
- */
 export async function isDisplayed(selector: string): Promise<boolean> {
   try {
     const el = await $(selector);
@@ -70,9 +47,6 @@ export async function isDisplayed(selector: string): Promise<boolean> {
   }
 }
 
-/**
- * Scrolls down by a fixed amount using W3C Actions.
- */
 export async function scrollDown(
   startPercent = 0.8,
   endPercent = 0.2,
@@ -83,9 +57,7 @@ export async function scrollDown(
   const startY = Math.round(height * startPercent);
   const endY = Math.round(height * endPercent);
 
-  await driver.action('pointer', {
-    parameters: { pointerType: 'touch' },
-  })
+  await driver.action('pointer', { parameters: { pointerType: 'touch' } })
     .move({ x, y: startY })
     .down()
     .pause(durationMs)
@@ -94,9 +66,6 @@ export async function scrollDown(
     .perform();
 }
 
-/**
- * Scrolls to an element using UiScrollable (Android-specific).
- */
 export async function scrollToText(text: string): Promise<WebdriverIO.Element> {
   const selector =
     `-android uiautomator` +
@@ -105,16 +74,10 @@ export async function scrollToText(text: string): Promise<WebdriverIO.Element> {
   return await $(selector);
 }
 
-/**
- * Pauses execution for the given milliseconds.
- */
 export async function pause(ms: number): Promise<void> {
   await driver.pause(ms);
 }
 
-/**
- * Takes a screenshot and saves it to the reports folder.
- */
 export async function takeScreenshot(name: string): Promise<void> {
   const dir = './reports/screenshots';
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -126,9 +89,6 @@ export async function takeScreenshot(name: string): Promise<void> {
   console.log(`📸 Screenshot saved: ${filePath}`);
 }
 
-/**
- * Retries a failing async action up to `attempts` times.
- */
 export async function retry<T>(
   fn: () => Promise<T>,
   attempts = 3,
@@ -145,5 +105,3 @@ export async function retry<T>(
   }
   throw lastError;
 }
-
-export { DEFAULT_TIMEOUT, SHORT_TIMEOUT };

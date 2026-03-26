@@ -1,4 +1,4 @@
-name: General Store Mobile Automation
+name: General Store Automation
 
 on:
   push:
@@ -25,9 +25,9 @@ env:
   PROFILE: pixel_6
 
 jobs:
-  # ─── Lint & Type-Check ───────────────────────────────────────────────────────
+  # Lint and type-check
   lint:
-    name: Lint & Type Check
+    name: Lint and Type Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -40,7 +40,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: TypeScript type check
         run: npm run type-check
@@ -48,10 +48,65 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-  # ─── Android E2E Tests ───────────────────────────────────────────────────────
+  # OrangeHRM API Tests (Playwright)
+  api-tests:
+    name: OrangeHRM API Tests - Recruitment
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Run OrangeHRM Recruitment API tests
+        run: npm run test:api
+        env:
+          ORANGEHRM_BASE_URL: https://opensource-demo.orangehrmlive.com
+          ORANGEHRM_USERNAME: Admin
+          ORANGEHRM_PASSWORD: admin123
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: reports/playwright/
+          retention-days: 30
+
+      - name: Upload Playwright JSON results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: reports/playwright-results.json
+          retention-days: 30
+
+      - name: Report API test summary
+        if: always()
+        run: |
+          echo "## OrangeHRM API Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | OrangeHRM Demo (opensource-demo.orangehrmlive.com) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Framework | Playwright + TypeScript |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scenarios | Add -> Verify in List -> Delete Candidate |" >> $GITHUB_STEP_SUMMARY
+          echo "| Report | Available in Artifacts tab |" >> $GITHUB_STEP_SUMMARY
+
+  # Android E2E Tests
   e2e-android:
-    name: E2E Tests — Android API ${{ env.API_LEVEL }}
-    runs-on: macos-latest       # macOS runners support hardware acceleration for AVD
+    name: E2E Tests - Android API 34
+    runs-on: macos-latest
     needs: lint
     timeout-minutes: 60
 
@@ -72,9 +127,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
-      - name: Install Appium 2 & UiAutomator2 driver
+      - name: Install Appium 2 and UiAutomator2 driver
         run: |
           npm install -g appium@latest
           appium driver install uiautomator2
@@ -95,7 +150,6 @@ jobs:
             adb wait-for-device
             adb shell input keyevent 82
 
-            # --base-path matches wdio.conf.ts path: '/wd/hub'
             appium --base-path /wd/hub --log-level warn --log appium.log &
             APPIUM_PID=$!
             sleep 10
@@ -135,7 +189,7 @@ jobs:
       - name: Report test summary
         if: always()
         run: |
-          echo "## 📊 Test Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Run Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Appium Server",
+      "type": "shell",
+      "command": "appium --log-level info",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "name": "Appium Server"
+      }
+    },
+    {
+      "label": "Run All Tests",
+      "type": "shell",
+      "command": "npm test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "name": "Test Runner"
+      },
+      "dependsOn": []
+    },
+    {
+      "label": "Open HTML Report",
+      "type": "shell",
+      "command": "open reports/html/index.html || start reports/html/index.html || xdg-open reports/html/index.html",
+      "group": "none",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Type Check",
+      "type": "shell",
+      "command": "npm run type-check",
+      "group": "build"
+    },
+    {
+      "label": "Lint Fix",
+      "type": "shell",
+      "command": "npm run lint:fix",
+      "group": "build"
+    }
+  ]
+}

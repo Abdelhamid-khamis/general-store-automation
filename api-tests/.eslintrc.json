@@ -1,6 +1,5 @@
 {
   "root": true,
-  "ignorePatterns": ["scripts/", "dist/", "node_modules/"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
@@ -21,14 +20,6 @@
     "no-var": "error"
   },
   "env": {
-    "node": true,
-    "mocha": true
-  },
-  "globals": {
-    "driver": "readonly",
-    "$": "readonly",
-    "$$": "readonly",
-    "browser": "readonly",
-    "expect": "readonly"
+    "node": true
   }
 }
