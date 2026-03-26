@@ -26,35 +26,30 @@ export interface CandidateRecord {
 
 /**
  * Thin HTTP client for the OrangeHRM REST API.
- * Uses Playwright's APIRequestContext so cookies are stored and replayed
- * automatically across calls — no manual cookie jar needed.
+ * Uses Playwright's APIRequestContext so the session cookie is stored and
+ * replayed automatically across calls — no manual cookie jar needed.
  */
 export class OrangeHRMClient {
-  private xsrfToken = '';
-
   constructor(private readonly request: APIRequestContext) {}
 
   // ─── Auth ────────────────────────────────────────────────────────────────
 
   async login(): Promise<void> {
-    // 1. Load the login page to harvest the hidden CSRF _token field
+    // 1. Load the login page to harvest the CSRF token embedded as a Vue prop:
+    //    <auth-login :token="&quot;TOKEN_VALUE&quot;" ...>
     const loginPage = await this.request.get('/web/index.php/auth/login');
     if (!loginPage.ok()) {
       throw new Error(`Login page unreachable: HTTP ${loginPage.status()}`);
     }
 
     const html = await loginPage.text();
-
-    // OrangeHRM v5.x is a Vue SPA — the CSRF token is embedded as a Vue component prop:
-    // <auth-login :token="&quot;TOKEN_VALUE&quot;" ...>
     const tokenMatch = html.match(/:token="&quot;([^&]+)&quot;"/);
-
     if (!tokenMatch) {
       throw new Error('CSRF _token not found in login page — page structure may have changed');
     }
 
-    // 2. Submit credentials as a form POST
-    await this.request.post('/web/index.php/auth/validate', {
+    // 2. Submit credentials — success sets the session cookie automatically
+    const validateRes = await this.request.post('/web/index.php/auth/validate', {
       form: {
         username: USERNAME,
         password: PASSWORD,
@@ -62,24 +57,9 @@ export class OrangeHRMClient {
       },
     });
 
-    // 3. Extract the XSRF-TOKEN cookie that the REST API requires as a header
-    const state = await this.request.storageState();
-    const xsrfCookie = state.cookies.find(c => c.name === 'XSRF-TOKEN');
-    if (!xsrfCookie) {
-      throw new Error(
-        'XSRF-TOKEN cookie not set after login — credentials may be wrong or the demo site may be down',
-      );
+    if (!validateRes.url().includes('/dashboard')) {
+      throw new Error('Login failed — did not redirect to dashboard. Check credentials.');
     }
-    this.xsrfToken = decodeURIComponent(xsrfCookie.value);
-  }
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────
-
-  private get apiHeaders(): Record<string, string> {
-    return {
-      'Content-Type': 'application/json',
-      'X-XSRF-TOKEN': this.xsrfToken,
-    };
   }
 
   // ─── Recruitment Candidates ───────────────────────────────────────────────
@@ -90,7 +70,7 @@ export class OrangeHRMClient {
    */
   async addCandidate(candidate: Candidate): Promise<CandidateRecord> {
     const res = await this.request.post('/web/index.php/api/v2/recruitment/candidates', {
-      headers: this.apiHeaders,
+      headers: { 'Content-Type': 'application/json' },
       data: {
         firstName: candidate.firstName,
         middleName: candidate.middleName ?? '',
@@ -117,7 +97,6 @@ export class OrangeHRMClient {
    */
   async listCandidates(): Promise<CandidateRecord[]> {
     const res = await this.request.get('/web/index.php/api/v2/recruitment/candidates', {
-      headers: this.apiHeaders,
       params: {
         limit: 50,
         offset: 0,
@@ -141,7 +120,7 @@ export class OrangeHRMClient {
    */
   async deleteCandidates(ids: number[]): Promise<void> {
     const res = await this.request.delete('/web/index.php/api/v2/recruitment/candidates', {
-      headers: this.apiHeaders,
+      headers: { 'Content-Type': 'application/json' },
       data: { ids },
     });
 
