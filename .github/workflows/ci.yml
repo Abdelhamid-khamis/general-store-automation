@@ -1,0 +1,145 @@
+name: General Store Mobile Automation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      platform_version:
+        description: 'Android platform version (e.g. 14.0)'
+        required: false
+        default: '14.0'
+      device_name:
+        description: 'AVD device name'
+        required: false
+        default: 'emulator-5554'
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+  API_LEVEL: 34
+  TARGET: google_apis
+  ARCH: x86_64
+  PROFILE: pixel_6
+
+jobs:
+  # ─── Lint & Type-Check ───────────────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+      - name: ESLint
+        run: npm run lint
+
+  # ─── Android E2E Tests ───────────────────────────────────────────────────────
+  e2e-android:
+    name: E2E Tests — Android API ${{ env.API_LEVEL }}
+    runs-on: macos-latest       # macOS runners support hardware acceleration for AVD
+    needs: lint
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Appium 2 & UiAutomator2 driver
+        run: |
+          npm install -g appium@latest
+          appium driver install uiautomator2
+          appium driver list
+
+      - name: Run E2E tests on Android emulator (API ${{ env.API_LEVEL }})
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: ${{ env.TARGET }}
+          arch: ${{ env.ARCH }}
+          profile: ${{ env.PROFILE }}
+          avd-name: test_avd_api${{ env.API_LEVEL }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            adb wait-for-device
+            adb shell input keyevent 82
+
+            # --base-path matches wdio.conf.ts path: '/wd/hub'
+            appium --base-path /wd/hub --log-level warn --log appium.log &
+            APPIUM_PID=$!
+            sleep 10
+
+            DEVICE_NAME=emulator-5554 \
+            PLATFORM_VERSION=${{ github.event.inputs.platform_version || '14.0' }} \
+            npm run test:report
+            TEST_EXIT=$?
+
+            kill $APPIUM_PID 2>/dev/null || true
+            exit $TEST_EXIT
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report-api${{ env.API_LEVEL }}
+          path: reports/
+          retention-days: 30
+
+      - name: Upload Appium logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-logs
+          path: appium.log
+          retention-days: 7
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: reports/screenshots/
+          retention-days: 7
+
+      - name: Report test summary
+        if: always()
+        run: |
+          echo "## 📊 Test Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Android API ${{ env.API_LEVEL }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| App | General Store (com.androidsample.generalstore) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Framework | WebdriverIO + Appium 2 + Mocha + TypeScript |" >> $GITHUB_STEP_SUMMARY
+          echo "| Report | Available in Artifacts |" >> $GITHUB_STEP_SUMMARY

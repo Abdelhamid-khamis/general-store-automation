@@ -1,0 +1,29 @@
+{
+  "testCases": [
+    {
+      "id": "TC_001",
+      "description": "Complete General Store purchase flow — Male user from Andorra",
+      "user": {
+        "name": "Abdelhamid Khamis",
+        "country": "Andorra",
+        "gender": "Male"
+      },
+      "product": {
+        "strategy": "Second_available",
+        "addToCartButtonIndex": 0
+      },
+      "assertions": {
+        "cartScreenTitle": "My Cart",
+        "productMustBeInCart": true
+      }
+    }
+  ],
+  "appConfig": {
+    "appPackage": "com.androidsample.generalstore",
+    "splashActivity": "com.androidsample.generalstore.SplashActivity",
+    "mainActivity": "com.androidsample.generalstore.MainActivity",
+    "productsActivity": "com.androidsample.generalstore.AllProductsActivity",
+    "cartActivity": "com.androidsample.generalstore.CartActivity",
+    "splashWaitMs": 5000
+  }
+}

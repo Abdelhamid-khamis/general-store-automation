@@ -1,0 +1,8 @@
+{
+  "timeout": 120000,
+  "retries": 1,
+  "ui": "bdd",
+  "reporter": "spec",
+  "require": ["ts-node/register"],
+  "spec": "src/tests/**/*.spec.ts"
+}

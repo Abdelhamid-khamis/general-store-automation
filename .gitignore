@@ -1,0 +1,18 @@
+node_modules/
+dist/
+reports/
+*.log
+.env
+.DS_Store
+*.orig
+
+# APK binaries tracked in git (demo app ~2.8 MB)
+# apps/*.apk
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# OS
+Thumbs.db
+
